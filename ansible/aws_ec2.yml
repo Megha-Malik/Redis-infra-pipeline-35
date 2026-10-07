@@ -2,8 +2,10 @@ plugin: amazon.aws.aws_ec2
 regions:
   - ap-south-1
 
+# Only target private instances tagged as Redis nodes
 filters:
   instance-state-name: [running]
+  tag:Role: redis-node
 
 keyed_groups:
   - key: tags.OS

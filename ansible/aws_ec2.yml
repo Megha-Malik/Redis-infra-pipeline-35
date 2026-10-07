@@ -2,9 +2,7 @@ plugin: amazon.aws.aws_ec2
 regions:
   - ap-south-1
 
-# Filter out Bastion Host - target only private Redis nodes
 filters:
-  tag:Role: redis-node
   instance-state-name: [running]
 
 keyed_groups:
@@ -13,5 +11,5 @@ keyed_groups:
 
 compose:
   ansible_host: private_ip_address
-  ansible_user: "tags.OS == 'ubuntu' | ternary('ubuntu', 'ec2-user')"
+  ansible_user: "('ubuntu' if (tags.get('OS') == 'ubuntu') else 'ec2-user')"
     

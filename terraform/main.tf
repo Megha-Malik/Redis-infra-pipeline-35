@@ -114,6 +114,10 @@ resource "aws_security_group" "bastion_sg" {
   tags = {
     Name = "bastion-sg"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group" "redis_private_sg" {
@@ -123,6 +127,10 @@ resource "aws_security_group" "redis_private_sg" {
 
   tags = {
     Name = "redis-private-sg"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -197,6 +205,10 @@ resource "aws_instance" "bastion" {
     Name = "Bastion-Host"
     Role = "bastion"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_instance" "al2023_redis" {
@@ -211,6 +223,10 @@ resource "aws_instance" "al2023_redis" {
     Role = "redis-node"
     OS   = "amazon_linux"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_instance" "ubuntu_redis" {
@@ -224,5 +240,9 @@ resource "aws_instance" "ubuntu_redis" {
     Name = "Redis-Ubuntu-Server"
     Role = "redis-node"
     OS   = "ubuntu"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }

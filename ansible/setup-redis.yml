@@ -5,11 +5,11 @@
 
   tasks:
     # --- Dynamic Variable Assignment ---
-    - name: Set OS specific variables for RedHat (Amazon Linux)
+    - name: Set OS specific variables for RedHat (Amazon Linux 2023)
       ansible.builtin.set_fact:
-        redis_package: "redis6"
-        redis_conf_path: "/etc/redis6/redis.conf"
-        redis_service_name: "redis6"
+        redis_package: "redis"
+        redis_conf_path: "/etc/redis/redis.conf"
+        redis_service_name: "redis"
       when: ansible_os_family == "RedHat"
 
     - name: Set OS specific variables for Debian (Ubuntu)

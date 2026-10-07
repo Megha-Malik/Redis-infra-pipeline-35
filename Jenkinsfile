@@ -59,9 +59,9 @@ pipeline {
                             echo "Bastion Public IP is: ${BASTION_IP}"
 
                             # Run Ansible Playbook using Bastion as SSH Jump Host
+                            # Note: '--user ec2-user' removed to allow aws_ec2.yml dynamic user selection (ubuntu / ec2-user)
                             ansible-playbook -i aws_ec2.yml setup-redis.yml \
                               --private-key ${SSH_KEY_PATH} \
-                              --user ec2-user \
                               --ssh-common-args="-o ProxyCommand='ssh -W %h:%p -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${BASTION_IP}' -o StrictHostKeyChecking=no"
                         '''
                     }

@@ -4,39 +4,53 @@
   become: yes
 
   tasks:
+    # --- Dynamic Variable Assignment ---
+    - name: Set OS specific variables for RedHat (Amazon Linux)
+      ansible.builtin.set_fact:
+        redis_package: "redis"
+        redis_conf_path: "/etc/redis/redis.conf"
+        redis_service_name: "redis"
+      when: ansible_os_family == "RedHat"
+
+    - name: Set OS specific variables for Debian (Ubuntu)
+      ansible.builtin.set_fact:
+        redis_package: "redis-server"
+        redis_conf_path: "/etc/redis/redis.conf"
+        redis_service_name: "redis-server"
+      when: ansible_os_family == "Debian"
+
     # --- Installation for Amazon Linux ---
-    - name: Install Redis on Amazon Linux 2023
+    - name: Install Redis on Amazon Linux
       ansible.builtin.dnf:
-        name: redis6
+        name: "{{ redis_package }}"
         state: present
       when: ansible_os_family == "RedHat"
 
     # --- Installation for Ubuntu ---
     - name: Install Redis on Ubuntu
       ansible.builtin.apt:
-        name: redis-server
+        name: "{{ redis_package }}"
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    # --- Configure Redis Binding to Listen on All Interfaces ---
+    # --- Configure Redis Binding ---
     - name: Allow Redis connections from local network
       ansible.builtin.lineinfile:
-        path: "{{ '/etc/redis6/redis.conf' if ansible_os_family == 'RedHat' else '/etc/redis/redis.conf' }}"
+        path: "{{ redis_conf_path }}"
         regexp: '^bind '
         line: 'bind 0.0.0.0'
+      notify: Restart Redis Service
 
     # --- Service Start & Enable ---
-    - name: Ensure Redis Service is Started & Enabled (RedHat)
+    - name: Ensure Redis Service is Started & Enabled
       ansible.builtin.service:
-        name: redis6
+        name: "{{ redis_service_name }}"
         state: started
         enabled: yes
-      when: ansible_os_family == "RedHat"
 
-    - name: Ensure Redis Service is Started & Enabled (Debian)
+  handlers:
+    - name: Restart Redis Service
       ansible.builtin.service:
-        name: redis-server
-        state: started
-        enabled: yes
-      when: ansible_os_family == "Debian"
+        name: "{{ redis_service_name }}"
+        state: restarted

@@ -7,9 +7,9 @@
     # --- Dynamic Variable Assignment ---
     - name: Set OS specific variables for RedHat (Amazon Linux)
       ansible.builtin.set_fact:
-        redis_package: "redis"
+        redis_package: "redis6"
         redis_conf_path: "/etc/redis/redis.conf"
-        redis_service_name: "redis"
+        redis_service_name: "redis6"
       when: ansible_os_family == "RedHat"
 
     - name: Set OS specific variables for Debian (Ubuntu)
@@ -19,14 +19,13 @@
         redis_service_name: "redis-server"
       when: ansible_os_family == "Debian"
 
-    # --- Installation for Amazon Linux ---
+    # --- Package Installation ---
     - name: Install Redis on Amazon Linux
       ansible.builtin.dnf:
         name: "{{ redis_package }}"
         state: present
       when: ansible_os_family == "RedHat"
 
-    # --- Installation for Ubuntu ---
     - name: Install Redis on Ubuntu
       ansible.builtin.apt:
         name: "{{ redis_package }}"
@@ -34,7 +33,7 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    # --- Configure Redis Binding ---
+    # --- Configure Binding ---
     - name: Allow Redis connections from local network
       ansible.builtin.lineinfile:
         path: "{{ redis_conf_path }}"

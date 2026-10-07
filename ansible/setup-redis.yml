@@ -8,7 +8,7 @@
     - name: Set OS specific variables for RedHat (Amazon Linux 2023)
       ansible.builtin.set_fact:
         redis_package: "redis6"
-        redis_conf_path: "/etc/redis6/redis.conf"
+        redis_conf_path: "/etc/redis/redis.conf" # Fixed path for AL2023
         redis_service_name: "redis6"
       when: ansible_os_family == "RedHat"
 

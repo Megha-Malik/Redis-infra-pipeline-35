@@ -1,0 +1,42 @@
+- name: Configure Redis Server on Multi-OS Private Instances
+  hosts: all
+  gather_facts: yes
+  become: yes
+
+  tasks:
+    # --- Installation for Amazon Linux ---
+    - name: Install Redis on Amazon Linux 2023
+      ansible.builtin.dnf:
+        name: redis6
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    # --- Installation for Ubuntu ---
+    - name: Install Redis on Ubuntu
+      ansible.builtin.apt:
+        name: redis-server
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    # --- Configure Redis Binding to Listen on All Interfaces ---
+    - name: Allow Redis connections from local network
+      ansible.builtin.lineinfile:
+        path: "{{ '/etc/redis6/redis.conf' if ansible_os_family == 'RedHat' else '/etc/redis/redis.conf' }}"
+        regexp: '^bind '
+        line: 'bind 0.0.0.0'
+
+    # --- Service Start & Enable ---
+    - name: Ensure Redis Service is Started & Enabled (RedHat)
+      ansible.builtin.service:
+        name: redis6
+        state: started
+        enabled: yes
+      when: ansible_os_family == "RedHat"
+
+    - name: Ensure Redis Service is Started & Enabled (Debian)
+      ansible.builtin.service:
+        name: redis-server
+        state: started
+        enabled: yes
+      when: ansible_os_family == "Debian"

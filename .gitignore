@@ -1,0 +1,60 @@
+# ==========================================
+# Terraform - Exclude Local State & Provider Caches
+# ==========================================
+# Local .terraform directories
+**/.terraform/
+
+# Terraform state files (Crucial for security and avoiding state drift in git)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude sensitive variables files
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration file
+.terraformrc
+terraform.rc
+
+# ==========================================
+# Ansible - Exclude Retry Files & Local Collections
+# ==========================================
+*.retry
+ansible.log
+ansible_fact_cache/
+
+# ==========================================
+# Keys, Credentials & Sensitive Files
+# ==========================================
+*.pem
+*.key
+*.pub
+*.id_rsa
+*.id_rsa.pub
+
+# ==========================================
+# Operating System & IDE Specific Files
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# VS Code / JetBrains Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

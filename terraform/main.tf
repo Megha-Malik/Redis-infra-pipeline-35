@@ -107,7 +107,7 @@ resource "aws_route_table_association" "private_assoc" {
 
 # --- Security Groups (Base) ---
 resource "aws_security_group" "bastion_sg" {
-  name        = "bastion-sg"
+  name_prefix        = "bastion-sg"
   description = "Allow SSH to Bastion"
   vpc_id      = aws_vpc.redis_vpc.id
 
@@ -121,7 +121,7 @@ resource "aws_security_group" "bastion_sg" {
 }
 
 resource "aws_security_group" "redis_private_sg" {
-  name        = "redis-private-sg"
+  name_prefix        = "redis-private-sg"
   description = "Allow SSH & Redis from Bastion Subnet"
   vpc_id      = aws_vpc.redis_vpc.id
 

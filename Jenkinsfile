@@ -49,7 +49,7 @@ pipeline {
                 dir('ansible') {
                     withCredentials([
                         aws(credentialsId: 'aws-credentials', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'),
-                        sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY_PATH')
+                        sshUserPrivateKey(credentialsId: 'ssh-privatekey', keyFileVariable: 'SSH_KEY_PATH')
                     ]) {
                         sh '''
                             echo "=== Waiting 30s for instances to initialize SSH ==="

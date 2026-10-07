@@ -8,14 +8,12 @@
     - name: Set OS specific variables for RedHat (Amazon Linux 2023)
       ansible.builtin.set_fact:
         redis_package: "redis6"
-        redis_conf_path: "/etc/redis/redis.conf" # Fixed path for AL2023
         redis_service_name: "redis6"
       when: ansible_os_family == "RedHat"
 
     - name: Set OS specific variables for Debian (Ubuntu)
       ansible.builtin.set_fact:
         redis_package: "redis-server"
-        redis_conf_path: "/etc/redis/redis.conf"
         redis_service_name: "redis-server"
       when: ansible_os_family == "Debian"
 
@@ -34,10 +32,26 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
 
+    # --- Locate Redis Config File Dynamically ---
+    - name: Find Redis configuration file
+      ansible.builtin.find:
+        paths:
+          - /etc
+          - /etc/redis
+          - /etc/redis6
+        patterns: "*redis*.conf"
+        recurse: yes
+      register: found_redis_conf
+
+    - name: Set detected Redis configuration path
+      ansible.builtin.set_fact:
+        target_redis_conf: "{{ found_redis_conf.files[0].path }}"
+      when: found_redis_conf.matched > 0
+
     # --- Configure Binding ---
     - name: Allow Redis connections from local network
       ansible.builtin.lineinfile:
-        path: "{{ redis_conf_path }}"
+        path: "{{ target_redis_conf }}"
         regexp: '^bind '
         line: 'bind 0.0.0.0'
       notify: Restart Redis Service

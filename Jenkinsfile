@@ -1,4 +1,4 @@
-
+```groovy
 pipeline {
     agent any
 
@@ -6,7 +6,7 @@ pipeline {
         choice(
             name: 'ACTION',
             choices: ['apply', 'destroy'],
-            description: 'Select apply to create infrastructure or destroy to delete it.'
+            description: 'Select apply to create infrastructure or destroy it.'
         )
     }
 
@@ -36,7 +36,7 @@ pipeline {
                         sh '''
                             set -e
                             echo "=== Terraform Init Started ==="
-                            terraform init
+                            terraform init -input=false
                             echo "=== Terraform Init Completed ==="
                         '''
                     }
@@ -98,7 +98,6 @@ pipeline {
                             set -e
 
                             echo "=== Terraform Apply Started ==="
-                            pwd
 
                             if [ ! -s tfplan ]; then
                                 echo "ERROR: tfplan file not found"
@@ -108,6 +107,33 @@ pipeline {
                             terraform apply -auto-approve tfplan
 
                             echo "=== Terraform Apply Completed Successfully ==="
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Verify Terraform State in S3') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                dir('terraform') {
+                    withCredentials([
+                        aws(
+                            credentialsId: 'aws-credentials',
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
+                    ]) {
+                        sh '''
+                            set -e
+
+                            echo "=== Verifying Terraform State in S3 ==="
+
+                            terraform state list
+
+                            echo "=== Terraform State Verification Completed ==="
                         '''
                     }
                 }
@@ -186,4 +212,6 @@ pipeline {
         }
     }
 }
+```
+
 

@@ -1,9 +1,19 @@
+
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 6.0"
     }
+  }
+
+  # S3 Remote Backend
+  backend "s3" {
+    bucket       = "megha-redis-tfstate-2026"
+    key          = "redis-infra/terraform.tfstate"
+    region       = "ap-south-1"
+    encrypt      = true
+    use_lockfile = true
   }
 }
 
@@ -107,7 +117,7 @@ resource "aws_route_table_association" "private_assoc" {
 
 # --- Security Groups (Base) ---
 resource "aws_security_group" "bastion_sg" {
-  name_prefix        = "bastion-sg"
+  name_prefix = "bastion-sg"
   description = "Allow SSH to Bastion"
   vpc_id      = aws_vpc.redis_vpc.id
 
@@ -121,8 +131,8 @@ resource "aws_security_group" "bastion_sg" {
 }
 
 resource "aws_security_group" "redis_private_sg" {
-  name_prefix        = "redis-private-sg"
-  description = "Allow SSH & Redis from Bastion Subnet"
+  name_prefix = "redis-private-sg"
+  description = "Allow SSH & Redis from Bastion"
   vpc_id      = aws_vpc.redis_vpc.id
 
   tags = {
@@ -185,7 +195,7 @@ data "aws_ami" "amazon_linux_2023" {
 
 data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["099720109477"] # Canonical
+  owners      = ["099720109477"]
 
   filter {
     name   = "name"

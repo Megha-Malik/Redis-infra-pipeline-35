@@ -1,4 +1,5 @@
 
+```groovy
 pipeline {
     agent any
 
@@ -33,7 +34,12 @@ pipeline {
                             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                         )
                     ]) {
-                        sh 'terraform init'
+                        sh '''
+                            set -e
+                            echo "=== Terraform Init Started ==="
+                            terraform init
+                            echo "=== Terraform Init Completed ==="
+                        '''
                     }
                 }
             }
@@ -53,10 +59,23 @@ pipeline {
                         )
                     ]) {
                         sh '''
-                            echo "=== Terraform Plan ==="
+                            set -e
+
+                            echo "=== Terraform Plan Started ==="
+
                             terraform plan \
                               -var="key_name=Redis-key" \
                               -out=tfplan
+
+                            echo "=== Terraform Plan Command Finished ==="
+
+                            if [ ! -s tfplan ]; then
+                                echo "ERROR: tfplan file is missing or empty"
+                                exit 1
+                            fi
+
+                            ls -lh tfplan
+                            echo "=== Terraform Plan Completed Successfully ==="
                         '''
                     }
                 }
@@ -77,8 +96,19 @@ pipeline {
                         )
                     ]) {
                         sh '''
-                            echo "=== Applying Terraform Plan ==="
+                            set -e
+
+                            echo "=== Terraform Apply Started ==="
+                            pwd
+
+                            if [ ! -s tfplan ]; then
+                                echo "ERROR: tfplan file not found"
+                                exit 1
+                            fi
+
                             terraform apply -auto-approve tfplan
+
+                            echo "=== Terraform Apply Completed Successfully ==="
                         '''
                     }
                 }
@@ -99,10 +129,15 @@ pipeline {
                         )
                     ]) {
                         sh '''
-                            echo "=== Destroying Infrastructure ==="
+                            set -e
+
+                            echo "=== Terraform Destroy Started ==="
+
                             terraform destroy \
                               -auto-approve \
                               -var="key_name=Redis-key"
+
+                            echo "=== Terraform Destroy Completed ==="
                         '''
                     }
                 }
@@ -127,6 +162,8 @@ pipeline {
                         )
                     ]) {
                         sh '''
+                            set -e
+
                             echo "=== Waiting for SSH ==="
                             sleep 30
 
@@ -141,6 +178,8 @@ pipeline {
                               -u ec2-user \
                               --private-key "${SSH_KEY_PATH}" \
                               --ssh-common-args="-o ProxyCommand='ssh -W %h:%p -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${BASTION_IP}' -o StrictHostKeyChecking=no"
+
+                            echo "=== Redis Configuration Completed ==="
                         '''
                     }
                 }
@@ -148,3 +187,4 @@ pipeline {
         }
     }
 }
+```

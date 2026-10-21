@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -5,7 +6,7 @@ pipeline {
         choice(
             name: 'ACTION',
             choices: ['apply', 'destroy'],
-            description: 'Select "apply" to create & configure infrastructure or "destroy" to clean up.'
+            description: 'Select apply to create infrastructure or destroy to delete it.'
         )
     }
 
@@ -17,24 +18,91 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/Megha-Malik/Redis-infra-pipeline-35.git'
+                git branch: 'main',
+                    url: 'https://github.com/Megha-Malik/Redis-infra-pipeline-35.git'
             }
         }
 
-        stage('Terraform Action') {
+        stage('Terraform Init') {
             steps {
                 dir('terraform') {
-                    withCredentials([aws(credentialsId: 'aws-credentials', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                        sh '''
-                            terraform init
+                    withCredentials([
+                        aws(
+                            credentialsId: 'aws-credentials',
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
+                    ]) {
+                        sh 'terraform init'
+                    }
+                }
+            }
+        }
 
-                            if [ "${ACTION}" = "apply" ]; then
-                                echo "=== Provisioning Infrastructure ==="
-                                terraform apply -auto-approve -var="key_name=Redis-key"
-                            elif [ "${ACTION}" = "destroy" ]; then
-                                echo "=== Destroying Infrastructure ==="
-                                terraform destroy -auto-approve -var="key_name=Redis-key"
-                            fi
+        stage('Terraform Plan') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                dir('terraform') {
+                    withCredentials([
+                        aws(
+                            credentialsId: 'aws-credentials',
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
+                    ]) {
+                        sh '''
+                            echo "=== Terraform Plan ==="
+                            terraform plan \
+                              -var="key_name=Redis-key" \
+                              -out=tfplan
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                dir('terraform') {
+                    withCredentials([
+                        aws(
+                            credentialsId: 'aws-credentials',
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
+                    ]) {
+                        sh '''
+                            echo "=== Applying Terraform Plan ==="
+                            terraform apply -auto-approve tfplan
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Destroy') {
+            when {
+                expression { params.ACTION == 'destroy' }
+            }
+            steps {
+                dir('terraform') {
+                    withCredentials([
+                        aws(
+                            credentialsId: 'aws-credentials',
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        )
+                    ]) {
+                        sh '''
+                            echo "=== Destroying Infrastructure ==="
+                            terraform destroy \
+                              -auto-approve \
+                              -var="key_name=Redis-key"
                         '''
                     }
                 }
@@ -43,25 +111,35 @@ pipeline {
 
         stage('Configure Redis via Ansible Dynamic Inventory') {
             when {
-                expression { return params.ACTION == 'apply' }
+                expression { params.ACTION == 'apply' }
             }
             steps {
                 dir('ansible') {
                     withCredentials([
-                        aws(credentialsId: 'aws-credentials', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'),
-                        sshUserPrivateKey(credentialsId: 'ssh-private-key', keyFileVariable: 'SSH_KEY_PATH')
+                        aws(
+                            credentialsId: 'aws-credentials',
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ),
+                        sshUserPrivateKey(
+                            credentialsId: 'ssh-private-key',
+                            keyFileVariable: 'SSH_KEY_PATH'
+                        )
                     ]) {
                         sh '''
-                            echo "=== Waiting 30s for instances to initialize SSH ==="
+                            echo "=== Waiting for SSH ==="
                             sleep 30
 
-                            BASTION_IP=$(cd ../terraform && terraform output -raw bastion_public_ip)
-                            echo "Bastion Public IP is: ${BASTION_IP}"
+                            BASTION_IP=$(cd ../terraform &&
+                                terraform output -raw bastion_public_ip)
 
-                            # Run Ansible Playbook using Bastion as SSH Jump Host
-                            ansible-playbook -i aws_ec2.yml setup-redis.yml \
+                            echo "Bastion Public IP: ${BASTION_IP}"
+
+                            ansible-playbook \
+                              -i aws_ec2.yml \
+                              setup-redis.yml \
                               -u ec2-user \
-                              --private-key ${SSH_KEY_PATH} \
+                              --private-key "${SSH_KEY_PATH}" \
                               --ssh-common-args="-o ProxyCommand='ssh -W %h:%p -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${BASTION_IP}' -o StrictHostKeyChecking=no"
                         '''
                     }

@@ -36,7 +36,7 @@ pipeline {
                         sh '''
                             set -e
                             echo "=== Terraform Init Started ==="
-                            terraform init -migrate-state -input=false
+                            terraform init -input=false
                             echo "=== Terraform Init Completed ==="
                         '''
                     }

@@ -206,7 +206,7 @@ data "aws_ami" "ubuntu" {
 # --- EC2 Instances ---
 resource "aws_instance" "bastion" {
   ami                    = data.aws_ami.amazon_linux_2023.id
-  instance_type          = "t3.micro"
+  instance_type          = "t2.micro"
   subnet_id              = aws_subnet.public_subnet.id
   vpc_security_group_ids = [aws_security_group.bastion_sg.id]
   key_name               = var.key_name
@@ -223,7 +223,7 @@ resource "aws_instance" "bastion" {
 
 resource "aws_instance" "al2023_redis" {
   ami                    = data.aws_ami.amazon_linux_2023.id
-  instance_type          = "t3.micro"
+  instance_type          = "t2.micro"
   subnet_id              = aws_subnet.private_subnet.id
   vpc_security_group_ids = [aws_security_group.redis_private_sg.id]
   key_name               = var.key_name
@@ -241,7 +241,7 @@ resource "aws_instance" "al2023_redis" {
 
 resource "aws_instance" "ubuntu_redis" {
   ami                    = data.aws_ami.ubuntu.id
-  instance_type          = "t3.micro"
+  instance_type          = "t2.micro"
   subnet_id              = aws_subnet.private_subnet.id
   vpc_security_group_ids = [aws_security_group.redis_private_sg.id]
   key_name               = var.key_name

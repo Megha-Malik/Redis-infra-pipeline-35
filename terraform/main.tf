@@ -9,9 +9,9 @@ terraform {
 
   # S3 Remote Backend
   backend "s3" {
-    bucket       = "megha-redis-tfstate-2026"
+    bucket       = "redis-s3-bucket-2026"
     key          = "redis-infra/terraform.tfstate"
-    region       = "ap-south-1"
+    region       = "us-east-1"
     encrypt      = true
     use_lockfile = true
   }
